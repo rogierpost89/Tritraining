@@ -207,7 +207,7 @@
   <div class="divider"></div>
   <div class="section-header" style="padding-bottom:6px;"><h2 style="font-size:15px;">This Week</h2></div>
   <div class="insights-row" id="insightsRow"></div>
-  <button class="record-btn" onclick="handleRecord()">▶ Record workout</button>
+  <button class="record-btn" onclick="handleRecord()">📋 Workout Details</button>
 </div>
 
 <!-- PLAN TAB -->
@@ -215,6 +215,9 @@
 
 <!-- INFO TAB -->
 <div id="tab-info" class="plan-view"><div id="infoContent"></div></div>
+
+<!-- GOALS TAB -->
+<div id="tab-goals" class="plan-view"><div id="goalsContent"></div></div>
 
 <div class="modal-overlay" id="sessionModal" onclick="closeModal(event)">
   <div class="modal" id="modalContent"></div>
@@ -224,7 +227,7 @@
   <div class="nav-item active" id="nav-today" onclick="setTab('today')"><div class="nav-icon">☀️</div>Today</div>
   <div class="nav-item" id="nav-plan" onclick="setTab('plan')"><div class="nav-icon">📋</div>Plan</div>
   <div class="nav-item" id="nav-info" onclick="setTab('info')"><div class="nav-icon">📊</div>Race Info</div>
-  <div class="nav-item"><div class="nav-icon">🏅</div>Goals</div>
+  <div class="nav-item" id="nav-goals" onclick="setTab('goals')"><div class="nav-icon">🏅</div>Goals</div>
 </div>
 
 <script>
@@ -590,16 +593,143 @@ function renderInfo() {
     </div>`;
 }
 
-const ALL_TABS = ['today','plan','info'];
+const ALL_TABS = ['today','plan','info','goals'];
 function setTab(tab) {
   ALL_TABS.forEach(t => {
     const el = document.getElementById('tab-'+t);
     if (el) el.style.display = t===tab ? 'block' : 'none';
   });
   document.querySelectorAll('.tab').forEach((el,i) => el.classList.toggle('active', ['today','plan','info'][i]===tab));
-  ['today','plan','info'].forEach(t => { const n=document.getElementById('nav-'+t); if(n) n.classList.toggle('active',t===tab); });
+  ['today','plan','info','goals'].forEach(t => { const n=document.getElementById('nav-'+t); if(n) n.classList.toggle('active',t===tab); });
   if (tab==='plan') renderPlan();
   if (tab==='info') renderInfo();
+  if (tab==='goals') renderGoals();
+}
+
+// ── Goals state (stored in memory) ──
+const GOALS = {
+  targets: [
+    { id:'swim', label:'🏊 Swim 1.5km', icon:'var(--swim)', target:'', placeholder:'e.g. under 32 min' },
+    { id:'t1',   label:'⚡ T1 target',   icon:'var(--run-interval)', target:'', placeholder:'e.g. under 2 min' },
+    { id:'bike', label:'🚴 Bike 40km',  icon:'var(--bike)', target:'', placeholder:'e.g. under 1h 15m' },
+    { id:'t2',   label:'⚡ T2 target',   icon:'var(--run-interval)', target:'', placeholder:'e.g. under 1:30' },
+    { id:'run',  label:'🏃 Run 10km',   icon:'var(--run-easy)', target:'', placeholder:'e.g. under 52 min' },
+    { id:'total',label:'🏆 Total time', icon:'var(--accent)', target:'', placeholder:'e.g. under 2h 45m' },
+  ],
+  checklist: [
+    { id:'wetsuit',  text:'Wetsuit checked & fits', done:false },
+    { id:'bike_fit', text:'Bike serviced + tyres pumped', done:false },
+    { id:'nutrition',text:'Race nutrition planned (gels/bars)', done:false },
+    { id:'elastic',  text:'Elastic laces on race shoes', done:false },
+    { id:'race_belt',text:'Race number belt ready', done:false },
+    { id:'recce',    text:'Studied the race course', done:false },
+    { id:'kit_bag',  text:'Transition kit bag packed', done:false },
+    { id:'sleep',    text:'Early night before race', done:false },
+    { id:'breakfast',text:'Race morning breakfast planned', done:false },
+    { id:'travel',   text:'Travel to venue sorted', done:false },
+  ],
+  pb: [
+    { id:'pb_swim', label:'🏊 Swim PB', value:'', placeholder:'e.g. 1500m in 29:30' },
+    { id:'pb_bike', label:'🚴 Bike PB', value:'', placeholder:'e.g. 40km in 1:10' },
+    { id:'pb_run',  label:'🏃 Run PB',  value:'', placeholder:'e.g. 10km in 48:00' },
+    { id:'pb_tri',  label:'🏆 Tri PB',  value:'', placeholder:'e.g. Sprint in 1:15' },
+  ],
+  notes: '',
+};
+
+function saveGoal(id, val) {
+  const t = GOALS.targets.find(x=>x.id===id);
+  if (t) t.target = val;
+}
+function savePB(id, val) {
+  const p = GOALS.pb.find(x=>x.id===id);
+  if (p) p.value = val;
+}
+function toggleCheck(id) {
+  const c = GOALS.checklist.find(x=>x.id===id);
+  if (c) { c.done = !c.done; renderGoals(); }
+}
+function saveNotes(val) { GOALS.notes = val; }
+
+function renderGoals() {
+  const doneCount = GOALS.checklist.filter(x=>x.done).length;
+  const total = GOALS.checklist.length;
+  const pct = Math.round((doneCount/total)*100);
+
+  document.getElementById('goalsContent').innerHTML = `
+    <div style="padding:14px 0 20px">
+
+      <!-- Race targets -->
+      <div style="font-size:17px;font-weight:700;margin-bottom:4px">🎯 Race Targets</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Set your goal times for June 21</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+        ${GOALS.targets.map(t => `
+          <div style="background:var(--surface);border-radius:14px;padding:12px 14px;border:1px solid var(--border);display:flex;align-items:center;gap:12px">
+            <div style="width:8px;height:36px;border-radius:99px;background:${t.icon};flex-shrink:0"></div>
+            <div style="flex:1">
+              <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px">${t.label}</div>
+              <input
+                type="text"
+                value="${t.target}"
+                placeholder="${t.placeholder}"
+                oninput="saveGoal('${t.id}',this.value)"
+                style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;width:100%;outline:none;transition:border-color 0.15s"
+                onfocus="this.style.borderColor='var(--accent)'"
+                onblur="this.style.borderColor='var(--border)'"
+              />
+            </div>
+          </div>`).join('')}
+      </div>
+
+      <!-- Race checklist -->
+      <div style="font-size:17px;font-weight:700;margin-bottom:4px">✅ Race Prep Checklist</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:13px;color:var(--muted)">${doneCount}/${total} done</div>
+        <div style="font-size:12px;font-weight:700;color:${pct===100?'var(--run-easy)':'var(--accent)'}">${pct}%</div>
+      </div>
+      <div style="background:var(--border);border-radius:99px;height:4px;margin-bottom:14px;overflow:hidden">
+        <div style="height:100%;border-radius:99px;background:${pct===100?'var(--run-easy)':'var(--accent)'};width:${pct}%;transition:width 0.5s ease"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px">
+        ${GOALS.checklist.map(c => `
+          <div onclick="toggleCheck('${c.id}')" style="background:var(--surface);border-radius:12px;padding:12px 14px;border:1px solid ${c.done?'var(--run-easy)':'var(--border)'};display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color 0.15s">
+            <div style="width:22px;height:22px;border-radius:6px;border:2px solid ${c.done?'var(--run-easy)':'var(--muted2)'};background:${c.done?'var(--run-easy)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s">
+              ${c.done?'<span style="color:#000;font-size:13px;font-weight:700">✓</span>':''}
+            </div>
+            <div style="font-size:13px;font-weight:500;color:${c.done?'var(--muted)':'var(--text)'};text-decoration:${c.done?'line-through':'none'};transition:all 0.15s">${c.text}</div>
+          </div>`).join('')}
+      </div>
+
+      <!-- Personal bests -->
+      <div style="font-size:17px;font-weight:700;margin-bottom:4px">📈 Personal Bests</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Track what you're improving from</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px">
+        ${GOALS.pb.map(p => `
+          <div style="background:var(--surface);border-radius:14px;padding:12px;border:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px">${p.label}</div>
+            <input
+              type="text"
+              value="${p.value}"
+              placeholder="${p.placeholder}"
+              oninput="savePB('${p.id}',this.value)"
+              style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 8px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;width:100%;outline:none;transition:border-color 0.15s"
+              onfocus="this.style.borderColor='var(--accent)'"
+              onblur="this.style.borderColor='var(--border)'"
+            />
+          </div>`).join('')}
+      </div>
+
+      <!-- Notes -->
+      <div style="font-size:17px;font-weight:700;margin-bottom:10px">📝 Race Day Notes</div>
+      <textarea
+        placeholder="Anything you want to remember — course notes, mantras, pacing strategy…"
+        oninput="saveNotes(this.value)"
+        style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.6;resize:none;height:110px;outline:none;transition:border-color 0.15s"
+        onfocus="this.style.borderColor='var(--accent)'"
+        onblur="this.style.borderColor='var(--border)'"
+      >${GOALS.notes}</textarea>
+
+    </div>`;
 }
 
 function handleRecord() {
