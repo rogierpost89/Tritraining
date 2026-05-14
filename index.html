@@ -464,7 +464,6 @@ function renderOverview() {
     if(pb) pb.style.width = Math.min(100,(bikeKm/70)*100)+'%';
   }, 80);
 
-  const tss = Math.round(swimM*0.08 + runKm*9 + bikeKm*5.5);
   document.getElementById('insightsRow').innerHTML = `
     <div class="insight-card">
       <div class="insight-label">Run</div>
@@ -481,11 +480,7 @@ function renderOverview() {
       <div class="insight-value">${bikeKm}<span class="insight-unit">km</span></div>
       <div class="insight-sub" style="color:var(--bike)">⚡ ${p.bike.typeLabel}</div>
     </div>
-    <div class="insight-card">
-      <div class="insight-label">Load</div>
-      <div class="insight-value">${tss}</div>
-      <div class="insight-sub">TSS est.</div>
-    </div>`;
+    `;
 
   document.getElementById('weekNavTitle').textContent = `Week ${wi+1} of 6`;
   document.getElementById('weekNavSub').textContent = `${fmt(WEEK_STARTS[wi])} – ${fmt(dayDate(wi,6))}`;
