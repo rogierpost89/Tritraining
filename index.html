@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TriTrain — Race Day June 21</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #13141a;
+    --surface: #1c1e27;
+    --surface2: #242634;
+    --border: #2e3042;
+    --text: #f0f1f5;
+    --muted: #7a7d8f;
+    --muted2: #4a4d5e;
+    --run-easy: #4ade80;
+    --run-tempo: #f97316;
+    --run-long: #a78bfa;
+    --run-interval: #f43f5e;
+    --swim: #38bdf8;
+    --bike: #fbbf24;
+    --rest: #3f4255;
+    --accent: #6366f1;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; max-width: 420px; margin: 0 auto; }
+
+  .header { padding: 14px 20px 10px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--swim)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; flex-shrink: 0; }
+  .header-title { font-size: 15px; font-weight: 600; }
+  .header-sub { font-size: 11px; color: var(--muted); }
+  .countdown-badge { display: flex; flex-direction: column; align-items: center; background: var(--surface2); padding: 5px 14px; border-radius: 12px; border: 1px solid var(--border); }
+  .countdown-num { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 700; line-height: 1; }
+  .countdown-num.urgent { color: var(--run-interval); }
+  .countdown-num.taper  { color: var(--bike); }
+  .countdown-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 2px; }
+
+  .phase-banner { margin: 10px 20px 0; border-radius: 12px; padding: 9px 14px; display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 600; background: var(--surface); border-left: 3px solid var(--accent); }
+  .phase-name { display: flex; align-items: center; gap: 6px; }
+  .phase-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .phase-tip { color: var(--muted); font-weight: 400; font-size: 11px; }
+
+  .tabs { display: flex; gap: 4px; padding: 10px 20px 0; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex-shrink: 0; padding: 7px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--surface2); color: var(--muted); border: 1px solid transparent; cursor: pointer; transition: all 0.15s; }
+  .tab.active { background: var(--accent); color: #fff; }
+  .tab:not(.active):hover { border-color: var(--border); color: var(--text); }
+
+  .week-nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px 4px; }
+  .week-nav button { background: var(--surface2); border: none; color: var(--text); width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+  .week-nav button:hover { background: var(--border); }
+  .week-nav button:disabled { opacity: 0.3; cursor: default; }
+  .week-nav-center { text-align: center; }
+  .week-nav-title { font-size: 13px; font-weight: 700; }
+  .week-nav-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+  .week-strip { padding: 8px 20px 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .day-col { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; }
+  .day-name { font-size: 9px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .day-num { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; transition: all 0.15s; }
+  .day-col.today .day-num { background: #fff; color: #000; font-weight: 700; }
+  .day-col.selected:not(.today) .day-num { background: var(--surface2); border: 1.5px solid var(--accent); }
+  .day-col.past .day-name, .day-col.past .day-num { color: var(--muted2); }
+  .day-col.race .day-num { background: var(--run-interval); color: #fff; font-weight: 700; }
+  .day-dot { width: 5px; height: 5px; border-radius: 50%; }
+
+  .section-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px 8px; }
+  .section-header h2 { font-size: 17px; font-weight: 700; }
+
+  .workout-card { margin: 0 20px 10px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); padding: 16px; display: flex; gap: 14px; cursor: pointer; transition: transform 0.12s, border-color 0.12s; }
+  .workout-card:hover { transform: translateY(-1px); border-color: var(--muted2); }
+  .workout-card:active { transform: scale(0.99); }
+  .card-stripe { width: 5px; border-radius: 99px; flex-shrink: 0; min-height: 58px; }
+  .card-body { flex: 1; min-width: 0; }
+  .card-title { font-size: 17px; font-weight: 700; line-height: 1.25; margin-bottom: 2px; }
+  .card-meta { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .card-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .tag { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--surface2); color: var(--text); display: flex; align-items: center; gap: 4px; }
+  .tag-dot { width: 5px; height: 5px; border-radius: 50%; }
+  .card-icon { font-size: 22px; align-self: center; flex-shrink: 0; }
+
+  .rest-card { margin: 0 20px 10px; border-radius: 16px; background: var(--surface); border: 1px dashed var(--border); padding: 14px 18px; display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 14px; font-weight: 500; }
+
+  .overview-card { margin: 0 20px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); padding: 14px 18px; cursor: pointer; transition: border-color 0.15s; }
+  .overview-card:hover { border-color: var(--accent); }
+  .overview-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .overview-title { font-size: 14px; font-weight: 600; }
+  .progress-bars { display: flex; gap: 4px; margin-bottom: 8px; }
+  .prog-bar { flex: 1; height: 4px; border-radius: 99px; background: var(--border); overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 99px; transition: width 0.8s cubic-bezier(.4,0,.2,1); width: 0%; }
+  .overview-stats { display: flex; justify-content: space-between; }
+  .overview-stat { font-size: 12px; color: var(--muted); }
+  .overview-stat span { color: var(--text); font-weight: 700; }
+
+  .insights-row { display: flex; gap: 10px; padding: 0 20px; overflow-x: auto; scrollbar-width: none; margin-bottom: 10px; }
+  .insights-row::-webkit-scrollbar { display: none; }
+  .insight-card { flex-shrink: 0; width: 130px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); padding: 12px; }
+  .insight-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+  .insight-value { font-size: 21px; font-weight: 700; font-family: 'DM Mono', monospace; line-height: 1.1; }
+  .insight-unit { font-size: 12px; font-family: 'DM Sans', sans-serif; }
+  .insight-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  .record-btn { margin: 4px 20px 14px; background: #fff; color: #000; border: none; border-radius: 999px; padding: 15px; font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; width: calc(100% - 40px); transition: transform 0.1s; }
+  .record-btn:active { transform: scale(0.97); }
+
+  .plan-view { padding: 0 20px 20px; display: none; }
+  .plan-view.show { display: block; }
+  .week-block { margin-bottom: 6px; }
+  .week-block-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 0 8px; border-bottom: 1px solid var(--border); margin-bottom: 8px; cursor: pointer; }
+  .week-block-left { display: flex; align-items: center; gap: 8px; }
+  .week-block-num { width: 26px; height: 26px; border-radius: 8px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+  .week-block-title { font-size: 14px; font-weight: 700; }
+  .week-block-dates { font-size: 11px; color: var(--muted); }
+  .week-block-meta { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+
+  .mini-session { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 6px; cursor: pointer; transition: border-color 0.12s; }
+  .mini-session:hover { border-color: var(--muted2); }
+  .mini-stripe { width: 3px; border-radius: 99px; min-height: 38px; flex-shrink: 0; }
+  .mini-body { flex: 1; }
+  .mini-title { font-size: 13px; font-weight: 600; line-height: 1.3; }
+  .mini-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .mini-icon { font-size: 18px; align-self: center; }
+
+  .divider { height: 1px; background: var(--border); margin: 6px 20px 0; }
+
+  .bottom-nav { position: sticky; bottom: 0; z-index: 50; background: var(--bg); border-top: 1px solid var(--border); display: flex; padding: 8px 0 16px; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 5px 0; transition: color 0.15s; color: var(--muted); font-size: 10px; font-weight: 600; }
+  .nav-item.active { color: var(--text); }
+  .nav-icon { font-size: 20px; }
+
+  .modal-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.75); backdrop-filter: blur(5px); display: none; align-items: flex-end; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: var(--surface2); border-radius: 24px 24px 0 0; padding: 20px 20px 34px; width: 100%; max-height: 82vh; overflow-y: auto; animation: slideUp 0.22s cubic-bezier(.4,0,.2,1); }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 36px; height: 4px; border-radius: 99px; background: var(--muted2); margin: 0 auto 16px; }
+  .modal-title { font-size: 21px; font-weight: 700; margin-bottom: 3px; }
+  .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+  .modal-stripe { height: 5px; border-radius: 99px; margin-bottom: 14px; }
+  .modal-section { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.09em; margin: 14px 0 8px; }
+  .modal-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+  .modal-stat { background: var(--surface); border-radius: 12px; padding: 10px 12px; flex: 1; min-width: 75px; }
+  .modal-stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .modal-stat-val { font-size: 17px; font-weight: 700; font-family: 'DM Mono', monospace; }
+  .modal-note { font-size: 13px; color: var(--muted); line-height: 1.55; }
+  .modal-steps { list-style: none; }
+  .modal-steps li { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; display: flex; gap: 10px; align-items: flex-start; }
+  .modal-steps li:last-child { border-bottom: none; }
+  .step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--muted); flex-shrink: 0; margin-top: 1px; }
+  .start-btn { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: 14px; padding: 15px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 18px; }
+  .start-btn:hover { opacity: 0.9; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="avatar">AT</div>
+    <div>
+      <div class="header-title">TriTrain</div>
+      <div class="header-sub">Olympic Distance · Jun 21</div>
+    </div>
+  </div>
+  <div class="countdown-badge">
+    <div class="countdown-num" id="cdNum">38</div>
+    <div class="countdown-label">days to go</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="setTab('today')">☀️ Today</div>
+  <div class="tab" onclick="setTab('plan')">📋 Full Plan</div>
+  <div class="tab" onclick="setTab('info')">📊 Race Info</div>
+</div>
+
+<!-- TODAY TAB -->
+<div id="tab-today">
+  <div class="phase-banner" id="phaseBanner">
+    <div class="phase-name"><div class="phase-dot" id="phaseDot"></div><span id="phaseName"></span></div>
+    <div class="phase-tip" id="phaseTip"></div>
+  </div>
+  <div class="week-nav">
+    <button id="btnPrev" onclick="prevWeek()">‹</button>
+    <div class="week-nav-center">
+      <div class="week-nav-title" id="weekNavTitle">Week 1 of 6</div>
+      <div class="week-nav-sub" id="weekNavSub"></div>
+    </div>
+    <button id="btnNext" onclick="nextWeek()">›</button>
+  </div>
+  <div class="week-strip" id="weekStrip"></div>
+  <div class="section-header">
+    <h2 id="dayHeading">Today</h2>
+    <div style="font-size:12px;color:var(--muted)" id="dayDateLabel"></div>
+  </div>
+  <div id="todayWorkouts"></div>
+  <div class="overview-card" onclick="setTab('plan')">
+    <div class="overview-top">
+      <div class="overview-title" id="overviewTitle"></div>
+      <div style="color:var(--muted);font-size:16px">›</div>
+    </div>
+    <div class="progress-bars" id="overviewBars"></div>
+    <div class="overview-stats" id="overviewStats"></div>
+  </div>
+  <div class="divider"></div>
+  <div class="section-header" style="padding-bottom:6px;"><h2 style="font-size:15px;">This Week</h2></div>
+  <div class="insights-row" id="insightsRow"></div>
+  <button class="record-btn" onclick="handleRecord()">▶ Record workout</button>
+</div>
+
+<!-- PLAN TAB -->
+<div id="tab-plan" class="plan-view"><div id="planContent"></div></div>
+
+<!-- INFO TAB -->
+<div id="tab-info" class="plan-view"><div id="infoContent"></div></div>
+
+<div class="modal-overlay" id="sessionModal" onclick="closeModal(event)">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<div class="bottom-nav">
+  <div class="nav-item active" id="nav-today" onclick="setTab('today')"><div class="nav-icon">☀️</div>Today</div>
+  <div class="nav-item" id="nav-plan" onclick="setTab('plan')"><div class="nav-icon">📋</div>Plan</div>
+  <div class="nav-item" id="nav-info" onclick="setTab('info')"><div class="nav-icon">📊</div>Race Info</div>
+  <div class="nav-item"><div class="nav-icon">🏅</div>Goals</div>
+</div>
+
+<script>
+const RACE_DATE  = new Date(2026, 5, 21);
+const TODAY      = new Date(2026, 4, 14);
+const DAYS_S     = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+const MONTHS     = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// Week start Mondays
+const WEEK_STARTS = [
+  new Date(2026,4,11), // W1 May 11
+  new Date(2026,4,18), // W2 May 18
+  new Date(2026,4,25), // W3 May 25
+  new Date(2026,5,1),  // W4 Jun 1
+  new Date(2026,5,8),  // W5 Jun 8
+  new Date(2026,5,15), // W6 Jun 15 (race Sun Jun 21)
+];
+
+const PHASES = [
+  { label:'Peak Load',         color:'var(--run-interval)', tip:'Push hard — build fitness now' },
+  { label:'Peak Load',         color:'var(--run-interval)', tip:'Biggest week — longest sessions' },
+  { label:'Race Simulation',   color:'var(--run-tempo)',    tip:'Rehearse race day in training' },
+  { label:'Taper begins',      color:'var(--bike)',         tip:'Volume down 30%, stay sharp' },
+  { label:'Final Sharpening',  color:'var(--swim)',         tip:'Stay fresh — short quality efforts' },
+  { label:'Race Week 🏆',      color:'var(--run-interval)', tip:'Rest, prep, trust your fitness' },
+];
+
+function s(type,icon,color,typeLabel,title,dist,distUnit,duration,dowIdx,timeHint,notes,steps){
+  return {type,icon,color,typeLabel,title,dist,distUnit,duration,dowIdx,timeHint,notes,steps};
+}
+
+const PLAN = [
+  // WEEK 1 — Peak Load
+  { swim: s('swim','🏊','var(--swim)','Swim','1600m Swim',1600,'m','45–55m',1,'Early morning · 5:45 AM',
+      'Hard effort. Build beyond race distance so 1500m feels comfortable.',
+      ['Warm-up: 400m easy freestyle','Drill: 4×50m high-elbow catch drill','Main: 4×300m @ RPE 7, 30s rest','Kick: 4×25m kick only','Cool-down: 200m easy']),
+    run: s('run','🏃','var(--run-tempo)','Tempo Run','7km Tempo Run',7,'km','38–46m',3,'Thursday morning',
+      'Hard tempo effort. 4km at threshold. Should be comfortably hard.',
+      ['2km easy warm-up jog','4km at threshold / tempo pace (RPE 7–8)','1km easy cool-down','4×20s strides at end']),
+    bike: s('bike','🚴','var(--bike)','Bike','55km Bike',55,'km','95–110m',5,'Weekend · Saturday morning',
+      'Longer ride with intensity. Build cycling power for the race.',
+      ['10min easy spin warm-up','3×12min sweet spot Z3, 5min easy between','Remaining time Z2 endurance','10min easy cool-down spin']),
+    long: s('run','🏃','var(--run-long)','Long Run','14km Long Run',14,'km','78–95m',6,'Sunday morning',
+      'Easy conversational pace throughout. Heart rate Z2, you should be able to hold a conversation.',
+      ['5min walk + light stretching','10min easy jog warm-up','60–70min easy long run RPE 4–5','5min walk cool-down','Stretch 10min — calves, quads, hamstrings']),
+  },
+  // WEEK 2 — Peak Load (biggest)
+  { swim: s('swim','🏊','var(--swim)','Swim','1800m Swim',1800,'m','52–62m',1,'Early morning · 5:45 AM',
+      'Longest swim of the block. Go beyond race distance so 1500m feels easy.',
+      ['Warm-up: 400m easy','Drill: 4×50m bilateral breathing + sighting','Main: 1800m continuous OR 3×600m with 45s rest','Focus on rhythm, relaxed stroke rate','Cool-down: 200m very easy']),
+    run: s('run','🏃','var(--run-interval)','Intervals','6×800m Intervals',6.4,'km','44–52m',3,'Thursday morning',
+      'Sharpest run session of the block. Race-pace efforts that build speed.',
+      ['2km easy warm-up','6×800m at 5km race pace RPE 8–9, 90s jog recovery','2km easy cool-down','Stretch thoroughly afterwards']),
+    bike: s('brick','🔥','var(--run-tempo)','Brick','Brick: 50km Bike + 4km Run',50,'km','95–110m',5,'Weekend · Saturday morning',
+      'Peak brick session. Feel the transition from bike to run legs — this is what race day feels like.',
+      ['15min easy spin warm-up','50km at Z2–3, varied terrain if possible','Rack bike immediately, change shoes','4km run at target triathlon run pace RPE 7','3min walk cool-down']),
+    long: s('run','🏃','var(--run-long)','Long Run','16km Long Run — Peak',16,'km','90–108m',6,'Sunday morning',
+      'Longest run of the plan. Stay easy the whole way. This is your engine-building run.',
+      ['5min walk warm-up','10min easy jog','75min easy long run RPE 4, full conversation pace','5min walk cool-down','Fuel well before and after — this is the hardest week']),
+  },
+  // WEEK 3 — Race Simulation
+  { swim: s('swim','🏊','var(--swim)','Swim','1500m Race Swim',1500,'m','44–54m',1,'Early morning · 5:45 AM',
+      'Race-simulation swim. Treat the opening 400m as your actual race start.',
+      ['Warm-up: 300m easy','Race start drill: 2×100m hard (simulate race exit)','Main: 1500m continuous at race effort — no stopping','Final 100m: race-pace sprint finish','Cool-down: 400m easy']),
+    run: s('run','🏃','var(--run-tempo)','Tempo Run','8km Tempo + Strides',8,'km','44–52m',3,'Thursday morning',
+      'Sustained tempo with race-pace strides at the end. Confidence builder.',
+      ['2km easy warm-up','5km at tempo/threshold pace RPE 7','1km easy float','6×20s race-pace strides with full recovery','0.5km cool-down walk']),
+    bike: s('brick','🔥','var(--run-tempo)','Brick','Brick: 45km Bike + 5km Run',45,'km','90–105m',5,'Weekend · Saturday morning',
+      'Race simulation brick. Bike at target race power, then run at target race pace.',
+      ['10min warm-up','45km at race effort Z3, target race power','Fast T2 practice — smooth not rushed','5km run at target triathlon run pace RPE 7','5min walk + stretch']),
+    long: s('run','🏃','var(--run-long)','Long Run','12km Easy Long Run',12,'km','65–78m',6,'Sunday morning',
+      'Reduced from last week — deliberate. Begin shifting toward taper. Easy and enjoyable.',
+      ['5min walk + stretching','10min easy jog','50min easy long run RPE 4–5','5min walk cool-down','Recovery nutrition within 30min']),
+  },
+  // WEEK 4 — Taper begins (−30%)
+  { swim: s('swim','🏊','var(--swim)','Swim','1200m Swim',1200,'m','35–42m',1,'Early morning · 5:45 AM',
+      'Reduced volume, hold quality. The water should start to feel fast and smooth.',
+      ['Warm-up: 300m easy','Drill: 4×50m perfect technique','Main: 4×200m at race effort, 30s rest','Feel fast and efficient — do not force it','Cool-down: 200m easy']),
+    run: s('run','🏃','var(--run-tempo)','Tempo Run','5km Tempo',5,'km','28–35m',3,'Thursday morning',
+      'Shorter tempo. Legs should feel noticeably lighter this week.',
+      ['1.5km easy warm-up','3km at tempo pace RPE 7','0.5km easy cool-down','4×20s fast strides']),
+    bike: s('bike','🚴','var(--bike)','Bike','40km Bike',40,'km','70–85m',5,'Weekend · Saturday morning',
+      'Shorter ride. Keep Z2 with 2 short Z3 efforts to stay sharp.',
+      ['10min warm-up','2×10min at Z3 sweet spot, 5min easy between','Remaining time Z2 easy','10min easy cool-down']),
+    long: s('run','🏃','var(--run-long)','Long Run','10km Easy Run',10,'km','55–65m',6,'Sunday morning',
+      'Shorter long run. Legs should feel noticeably fresher — that is the taper working.',
+      ['5min walk','10min easy jog','40min easy run RPE 4','5min walk cool-down','You should finish feeling you could do more — perfect']),
+  },
+  // WEEK 5 — Final Sharpening
+  { swim: s('swim','🏊','var(--swim)','Swim','1000m Swim',1000,'m','30–36m',1,'Early morning · 5:45 AM',
+      'Short, sharp, confident swim. Leave the water feeling great and fast.',
+      ['Warm-up: 200m easy','4×50m technique drills','Main: 4×200m — first 2 easy, last 2 at race pace','Cool-down: 200m easy']),
+    run: s('run','🏃','var(--run-easy)','Easy Run','4km Easy + Strides',4,'km','24–30m',3,'Thursday morning',
+      'Keep the legs turning. No fatigue, only freshness and confidence.',
+      ['1km easy warm-up','2km easy run RPE 3–4','6×20s fast strides with full recovery','1km easy cool-down']),
+    bike: s('bike','🚴','var(--bike)','Bike','30km Sharpener',30,'km','52–62m',5,'Weekend · Saturday morning',
+      'Easy short ride with a few race-pace efforts to stay neuromuscularly sharp.',
+      ['10min easy spin','3×5min at race effort Z3, 5min easy between','15min easy spin cool-down']),
+    long: s('run','🏃','var(--run-long)','Long Run','8km Easy Run',8,'km','44–52m',6,'Sunday morning',
+      'Final longer run. Easy and enjoyable. The last volume run before race week.',
+      ['5min walk','8km easy RPE 3–4, enjoy it','5min walk cool-down','Soak up the fitness you have built — it is all in there']),
+  },
+  // WEEK 6 — Race Week
+  { swim: s('swim','🏊','var(--swim)','Swim','600m Shakeout Swim',600,'m','20–25m',1,'Early morning · Tuesday',
+      'Shakeout only. Feel the water. Do not work hard. Exit feeling relaxed.',
+      ['400m easy continuous — just feel','4×50m @ race pace with full rest','Cool-down: 200m easy','Get out feeling fresh and ready']),
+    run: s('run','🏃','var(--run-easy)','Easy Run','3km Easy Shakeout',3,'km','18–22m',3,'Thursday morning',
+      'Legs should feel amazing by now. Light, easy, relaxed.',
+      ['2km very easy jog RPE 2–3','4×20s light strides, very relaxed','1km easy walk/jog home']),
+    bike: s('bike','🚴','var(--bike)','Bike','20km Easy Spin',20,'km','35–45m',5,'Saturday morning',
+      'Easy pre-race spin. Loosen up. Check your bike is race-ready.',
+      ['20min very easy spin RPE 2','Check gears, tyres, nutrition setup','No effort — just movement and prep']),
+    long: s('race','🏆','var(--run-interval)','RACE DAY','🏆 Olympic Triathlon — Race Day!',51.5,'km','2h 20m–3h 30m',6,'Race Day — Sunday June 21',
+      'This is it. Trust every session — every early swim, every long ride, every tired long run brought you here. Race smart: start the swim easy, build the bike to Z3, run the first 3km controlled, then give everything.',
+      ['Pre-race: breakfast 3h before, hydrate, kit laid out night before','Swim 1.5km: seed correctly, start at RPE 6, sight every 5–6 strokes','T1: wetsuit off, helmet on — smooth not rushed','Bike 40km: first 10km controlled, fuel at km 20, stay at Z2–Z3','T2: rack, shoes on, elastic laces — every second counts','Run 10km: first 3km RPE 6, build km 4–7 to RPE 8, last 3km — everything','🎉 Finish strong — you earned every second of this!']),
+  },
+];
+
+let currentWeekIdx = 0;
+let selectedDow = 0;
+
+function fmt(d) { return `${d.getDate()} ${MONTHS[d.getMonth()]}`; }
+function dayDate(wi, dow) { const d = new Date(WEEK_STARTS[wi]); d.setDate(d.getDate()+dow); return d; }
+function daysLeft() { return Math.ceil((RACE_DATE - TODAY) / 86400000); }
+
+function getSessionsForWeek(wi) {
+  const p = PLAN[wi];
+  return [ {dow:1,s:p.swim},{dow:3,s:p.run},{dow:5,s:p.bike},{dow:6,s:p.long} ];
+}
+
+function initWeek() {
+  for (let i = WEEK_STARTS.length-1; i>=0; i--) {
+    if (TODAY >= WEEK_STARTS[i]) { currentWeekIdx = i; break; }
+  }
+  const diff = Math.floor((TODAY - WEEK_STARTS[currentWeekIdx]) / 86400000);
+  selectedDow = Math.max(0, Math.min(6, diff));
+}
+
+function renderPhaseBanner() {
+  const ph = PHASES[currentWeekIdx];
+  document.getElementById('phaseName').textContent = 'Phase: ' + ph.label;
+  document.getElementById('phaseDot').style.background = ph.color;
+  document.getElementById('phaseTip').textContent = ph.tip;
+  document.getElementById('phaseBanner').style.borderLeftColor = ph.color;
+}
+
+function renderWeekStrip() {
+  const smap = {};
+  getSessionsForWeek(currentWeekIdx).forEach(x => smap[x.dow] = x.s);
+  document.getElementById('weekStrip').innerHTML = DAYS_S.map((d,i) => {
+    const date = dayDate(currentWeekIdx, i);
+    const isToday = date.toDateString() === TODAY.toDateString();
+    const isSel = i === selectedDow;
+    const isPast = date < TODAY && !isToday;
+    const isRace = date.toDateString() === RACE_DATE.toDateString();
+    let cls = 'day-col';
+    if (isRace) cls += ' race';
+    else if (isToday) cls += ' today';
+    else if (isSel) cls += ' selected';
+    if (isPast) cls += ' past';
+    const sc = smap[i] ? smap[i].color : 'transparent';
+    return `<div class="${cls}" onclick="selectDay(${i})">
+      <div class="day-name">${d}</div>
+      <div class="day-num">${date.getDate()}</div>
+      <div class="day-dot" style="background:${sc}"></div>
+    </div>`;
+  }).join('');
+}
+
+function renderTodayWorkouts() {
+  const todays = getSessionsForWeek(currentWeekIdx).filter(x => x.dow === selectedDow);
+  const date = dayDate(currentWeekIdx, selectedDow);
+  document.getElementById('dayDateLabel').textContent = fmt(date);
+  const isToday = date.toDateString() === TODAY.toDateString();
+  document.getElementById('dayHeading').textContent = isToday ? 'Today' : DAYS_S[selectedDow].charAt(0)+DAYS_S[selectedDow].slice(1).toLowerCase();
+
+  if (!todays.length) {
+    const isRaceDay = date.toDateString() === RACE_DATE.toDateString();
+    document.getElementById('todayWorkouts').innerHTML = isRaceDay
+      ? `<div class="workout-card" onclick="openSession(${currentWeekIdx},6)" style="border-color:var(--run-interval)">
+          <div class="card-stripe" style="background:var(--run-interval)"></div>
+          <div class="card-body">
+            <div class="card-title">🏆 Race Day!</div>
+            <div class="card-meta">Sunday 21 June · Olympic Triathlon</div>
+            <div class="card-tags">
+              <div class="tag"><div class="tag-dot" style="background:var(--swim)"></div>1.5km swim</div>
+              <div class="tag">40km bike</div><div class="tag">10km run</div>
+            </div>
+          </div>
+          <div class="card-icon">🏆</div>
+        </div>`
+      : `<div class="rest-card"><span style="font-size:22px">💤</span>
+          <div><div style="font-weight:600;color:var(--text)">Rest Day</div>
+          <div style="font-size:12px;margin-top:2px">Recovery is training. Stretch, hydrate, sleep.</div></div></div>`;
+    return;
+  }
+
+  document.getElementById('todayWorkouts').innerHTML = todays.map(x => {
+    const s = x.s;
+    return `<div class="workout-card" onclick="openSession(${currentWeekIdx},${x.dow})">
+      <div class="card-stripe" style="background:${s.color}"></div>
+      <div class="card-body">
+        <div class="card-title">${s.title}</div>
+        <div class="card-meta">${s.timeHint} · ${s.duration}</div>
+        <div class="card-tags">
+          <div class="tag"><div class="tag-dot" style="background:${s.color}"></div>${s.typeLabel}</div>
+          ${s.dist ? `<div class="tag">${s.dist}${s.distUnit}</div>` : ''}
+        </div>
+      </div>
+      <div class="card-icon">${s.icon}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderOverview() {
+  const wi = currentWeekIdx;
+  const p = PLAN[wi];
+  const runKm = (p.run.dist||0) + (p.long.dist||0);
+  const bikeKm = p.bike.dist||0;
+  const swimM = p.swim.dist||0;
+
+  document.getElementById('overviewTitle').textContent = `Week ${wi+1} · ${PHASES[wi].label}`;
+  document.getElementById('overviewBars').innerHTML = `
+    <div class="prog-bar"><div class="prog-fill" id="pb-s" style="background:var(--swim)"></div></div>
+    <div class="prog-bar"><div class="prog-fill" id="pb-r" style="background:var(--run-long)"></div></div>
+    <div class="prog-bar"><div class="prog-fill" id="pb-b" style="background:var(--bike)"></div></div>`;
+  document.getElementById('overviewStats').innerHTML = `
+    <div class="overview-stat">Sessions: <span>0/4</span></div>
+    <div class="overview-stat">Run: <span>${runKm}km</span> · Swim: <span>${swimM}m</span></div>`;
+  setTimeout(() => {
+    const ps = document.getElementById('pb-s'), pr = document.getElementById('pb-r'), pb = document.getElementById('pb-b');
+    if(ps) ps.style.width = Math.min(100,(swimM/1800)*100)+'%';
+    if(pr) pr.style.width = Math.min(100,(runKm/30)*100)+'%';
+    if(pb) pb.style.width = Math.min(100,(bikeKm/70)*100)+'%';
+  }, 80);
+
+  const tss = Math.round(swimM*0.08 + runKm*9 + bikeKm*5.5);
+  document.getElementById('insightsRow').innerHTML = `
+    <div class="insight-card">
+      <div class="insight-label">Run</div>
+      <div class="insight-value">${runKm}<span class="insight-unit">km</span></div>
+      <div class="insight-sub">${p.run.typeLabel}</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-label">Swim</div>
+      <div class="insight-value">${swimM}<span class="insight-unit">m</span></div>
+      <div class="insight-sub" style="color:var(--swim)">🌊 early AM</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-label">Bike</div>
+      <div class="insight-value">${bikeKm}<span class="insight-unit">km</span></div>
+      <div class="insight-sub" style="color:var(--bike)">⚡ ${p.bike.typeLabel}</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-label">Load</div>
+      <div class="insight-value">${tss}</div>
+      <div class="insight-sub">TSS est.</div>
+    </div>`;
+
+  document.getElementById('weekNavTitle').textContent = `Week ${wi+1} of 6`;
+  document.getElementById('weekNavSub').textContent = `${fmt(WEEK_STARTS[wi])} – ${fmt(dayDate(wi,6))}`;
+  document.getElementById('btnPrev').disabled = wi === 0;
+  document.getElementById('btnNext').disabled = wi === 5;
+
+  const cd = daysLeft();
+  const cdEl = document.getElementById('cdNum');
+  cdEl.textContent = cd;
+  cdEl.className = 'countdown-num' + (cd <= 7 ? ' urgent' : cd <= 14 ? ' taper' : '');
+}
+
+function openSession(wi, dow) {
+  const entry = getSessionsForWeek(wi).find(x => x.dow === dow);
+  if (!entry) return;
+  const s = entry.s;
+  const date = dayDate(wi, dow);
+  document.getElementById('modalContent').innerHTML = `
+    <div class="modal-handle"></div>
+    <div class="modal-stripe" style="background:${s.color};width:60px"></div>
+    <div class="modal-title">${s.title}</div>
+    <div class="modal-sub">${DAYS_S[dow]} ${fmt(date)} · Week ${wi+1} · ${s.duration}</div>
+    <div class="modal-stats">
+      ${s.dist ? `<div class="modal-stat"><div class="modal-stat-label">Distance</div><div class="modal-stat-val">${s.dist}${s.distUnit}</div></div>` : ''}
+      <div class="modal-stat"><div class="modal-stat-label">Duration</div><div class="modal-stat-val" style="font-size:13px;font-family:'DM Sans'">${s.duration}</div></div>
+      <div class="modal-stat"><div class="modal-stat-label">Type</div><div class="modal-stat-val" style="font-size:12px;font-family:'DM Sans'">${s.typeLabel}</div></div>
+    </div>
+    ${s.notes ? `<div class="modal-section">Coach Note</div><p class="modal-note">${s.notes}</p>` : ''}
+    ${s.steps ? `<div class="modal-section">Session Breakdown</div>
+    <ul class="modal-steps">${s.steps.map((st,i)=>`<li><div class="step-num">${i+1}</div><div>${st}</div></li>`).join('')}</ul>` : ''}
+    <button class="start-btn" onclick="closeModal()">
+      ${s.type==='race' ? "🏆 RACE DAY — Let's go!" : `✓ Let's do it ${s.icon}`}
+    </button>`;
+  document.getElementById('sessionModal').classList.add('show');
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('sessionModal'))
+    document.getElementById('sessionModal').classList.remove('show');
+}
+
+function selectDay(i) { selectedDow = i; renderWeekStrip(); renderTodayWorkouts(); }
+function prevWeek() { if (currentWeekIdx>0) { currentWeekIdx--; refresh(); } }
+function nextWeek() { if (currentWeekIdx<5) { currentWeekIdx++; refresh(); } }
+function refresh() { renderPhaseBanner(); renderWeekStrip(); renderTodayWorkouts(); renderOverview(); }
+
+function renderPlan() {
+  document.getElementById('planContent').innerHTML = PLAN.map((p,wi) => {
+    const ss = getSessionsForWeek(wi);
+    const ph = PHASES[wi];
+    const isCur = wi === currentWeekIdx;
+    return `<div class="week-block">
+      <div class="week-block-header" onclick="currentWeekIdx=${wi};selectedDow=${wi===currentWeekIdx?selectedDow:1};refresh();setTab('today')">
+        <div class="week-block-left">
+          <div class="week-block-num" style="${isCur?'background:var(--accent);color:#fff':''}">${wi+1}</div>
+          <div>
+            <div class="week-block-title" style="color:${wi===5?'var(--run-interval)':'var(--text)'}">${ph.label}</div>
+            <div class="week-block-dates">${fmt(WEEK_STARTS[wi])} – ${fmt(dayDate(wi,6))}</div>
+          </div>
+        </div>
+        <div class="week-block-meta"><div class="phase-dot" style="background:${ph.color};width:7px;height:7px;border-radius:50%"></div>${wi===5?'🏆':'›'}</div>
+      </div>
+      ${ss.map(x=>{const s=x.s;const d=dayDate(wi,x.dow);return `<div class="mini-session" onclick="openSession(${wi},${x.dow})">
+        <div class="mini-stripe" style="background:${s.color}"></div>
+        <div class="mini-body">
+          <div class="mini-title">${s.title}</div>
+          <div class="mini-meta">${DAYS_S[x.dow]} ${fmt(d)} · ${s.duration}${s.dist?` · ${s.dist}${s.distUnit}`:''}</div>
+        </div>
+        <div class="mini-icon">${s.icon}</div>
+      </div>`;}).join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderInfo() {
+  document.getElementById('infoContent').innerHTML = `
+    <div style="padding:14px 0 6px">
+      <div style="font-size:17px;font-weight:700;margin-bottom:4px">🏆 Olympic Triathlon · Jun 21</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Distances: 1.5km swim · 40km bike · 10km run</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+        <div class="insight-card" style="width:auto"><div class="insight-label">Swim</div><div class="insight-value" style="font-size:17px">1.5<span class="insight-unit">km</span></div><div class="insight-sub" style="color:var(--swim)">Open water</div></div>
+        <div class="insight-card" style="width:auto"><div class="insight-label">Bike</div><div class="insight-value" style="font-size:17px">40<span class="insight-unit">km</span></div><div class="insight-sub" style="color:var(--bike)">Road</div></div>
+        <div class="insight-card" style="width:auto"><div class="insight-label">Run</div><div class="insight-value" style="font-size:17px">10<span class="insight-unit">km</span></div><div class="insight-sub" style="color:var(--run-easy)">Road</div></div>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">6-Week Timeline</div>
+      ${PHASES.map((ph,i) => {
+        const isCur = i === currentWeekIdx;
+        return `<div style="display:flex;align-items:center;gap:10px;background:var(--surface);padding:11px 14px;border-radius:12px;margin-bottom:6px;border:1px solid ${isCur?'var(--accent)':'var(--border)'}">
+          <div style="width:8px;height:8px;border-radius:50%;background:${ph.color};flex-shrink:0"></div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:700">Wk ${i+1} · ${ph.label}</div>
+          <div style="font-size:11px;color:var(--muted)">${fmt(WEEK_STARTS[i])} – ${fmt(dayDate(i,6))} · ${ph.tip}</div></div>
+          ${isCur?'<div style="font-size:11px;font-weight:700;color:var(--accent)">NOW</div>':''}
+        </div>`;
+      }).join('')}
+      <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:16px 0 8px">Race Day Strategy</div>
+      ${[
+        ['🏊 Swim 1.5km','var(--swim)','Start at RPE 6 — you will be tempted to go harder. Sight every 5 strokes. Stay wide of the main pack for the first 200m. Find feet to draft.'],
+        ['🚴 Bike 40km','var(--bike)','First 10km: settle and eat. Target Z2–Z3. Do not hammer — you need your legs. Take nutrition at km 20. Arrive at T2 in control.'],
+        ['🏃 Run 10km','var(--run-easy)','First 3km at RPE 6 even if it feels too easy — your legs will thank you in km 7. Build through the middle. Last 2km: empty the tank.'],
+        ['⚡ Transitions','var(--run-interval)','Practice T1 and T2 this week. Elastic laces, helmet pre-clipped, race belt on the bike. Every 10 seconds counts.'],
+      ].map(([t,c,d]) => `<div style="background:var(--surface);padding:12px 14px;border-radius:12px;margin-bottom:6px;border-left:3px solid ${c}">
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px">${t}</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.55">${d}</div>
+      </div>`).join('')}
+    </div>`;
+}
+
+const ALL_TABS = ['today','plan','info'];
+function setTab(tab) {
+  ALL_TABS.forEach(t => {
+    const el = document.getElementById('tab-'+t);
+    if (el) el.style.display = t===tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((el,i) => el.classList.toggle('active', ['today','plan','info'][i]===tab));
+  ['today','plan','info'].forEach(t => { const n=document.getElementById('nav-'+t); if(n) n.classList.toggle('active',t===tab); });
+  if (tab==='plan') renderPlan();
+  if (tab==='info') renderInfo();
+}
+
+function handleRecord() {
+  const entry = getSessionsForWeek(currentWeekIdx).find(x => x.dow === selectedDow);
+  if (entry) { openSession(currentWeekIdx, selectedDow); return; }
+  document.getElementById('modalContent').innerHTML = `
+    <div class="modal-handle"></div>
+    <div class="modal-title">Rest Day 💤</div>
+    <div class="modal-sub">No workout scheduled — this is intentional</div>
+    <div style="font-size:14px;color:var(--muted);margin:14px 0;line-height:1.6">
+      <strong style="color:var(--text)">Rest days make you faster.</strong> Your body adapts during recovery, not during the session itself. Sleep 8h, stay hydrated, light stretching only.
+    </div>
+    <button class="start-btn" onclick="closeModal()" style="background:var(--surface2);color:var(--text)">Got it — rest up 💤</button>`;
+  document.getElementById('sessionModal').classList.add('show');
+}
+
+initWeek();
+setTab('today');
+refresh();
+</script>
+</body>
+</html>
